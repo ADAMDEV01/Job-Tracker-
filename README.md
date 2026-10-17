@@ -223,6 +223,18 @@ The Compose stack starts PostgreSQL with a named persistent volume, waits for th
 
 The UI currently stores the short-lived bearer token in browser `sessionStorage`; this is cleared when the tab session ends or a `401` response indicates expiration. For stricter production threat models, move token handling to secure, `HttpOnly`, `SameSite` cookies and add CSRF protections before deployment.
 
+## Vercel backend deployment
+
+Set `DATABASE_URL` to an external PostgreSQL connection string using the `postgresql+psycopg://` driver, and set `JWT_SECRET` to a random value of at least 32 bytes in the backend project's Vercel Environment Variables for each deployed environment. Keep both values private. Vercel's Python function deployment does not run the Dockerfile command that applies migrations, so run migrations separately against that same database after setting the environment variables locally:
+
+```powershell
+Set-Location .\backend
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m alembic upgrade head
+```
+
+Redeploy the backend after saving environment variables. Check `https://<backend-domain>/health/ready`; a `200` response confirms the database and required user table are available. A `503` response indicates that `DATABASE_URL` is unreachable or the migrations have not been applied.
+
 ## Screenshots
 
 Add current desktop and mobile screenshots here after running the application. Capture the dashboard, applications list, and application history view; avoid screenshots containing personal account data.
@@ -450,6 +462,18 @@ The Compose stack starts PostgreSQL with a named persistent volume, waits for th
 5. Use HTTPS for both services, enable provider backups for PostgreSQL, and use the platform secret manager for all credentials. Never use local Compose credentials in production.
 
 The UI currently stores the short-lived bearer token in browser `sessionStorage`; this is cleared when the tab session ends or a `401` response indicates expiration. For stricter production threat models, move token handling to secure, `HttpOnly`, `SameSite` cookies and add CSRF protections before deployment.
+
+## Vercel backend deployment
+
+Set `DATABASE_URL` to an external PostgreSQL connection string using the `postgresql+psycopg://` driver, and set `JWT_SECRET` to a random value of at least 32 bytes in the backend project's Vercel Environment Variables for each deployed environment. Keep both values private. Vercel's Python function deployment does not run the Dockerfile command that applies migrations, so run migrations separately against that same database after setting the environment variables locally:
+
+```powershell
+Set-Location .\backend
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m alembic upgrade head
+```
+
+Redeploy the backend after saving environment variables. Check `https://<backend-domain>/health/ready`; a `200` response confirms the database and required user table are available. A `503` response indicates that `DATABASE_URL` is unreachable or the migrations have not been applied.
 
 ## Screenshots
 

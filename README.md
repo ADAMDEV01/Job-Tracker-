@@ -143,7 +143,7 @@ $env:JWT_SECRET = & .\.venv\Scripts\python.exe -c "import secrets; print(secrets
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-The default database is `sqlite:///./job_tracker.db` relative to `backend`. For PostgreSQL, set `DATABASE_URL` to a URL using the `postgresql+psycopg://` driver. Configure `CORS_ORIGINS` as a comma-separated list when the frontend origin differs from the default `http://localhost:5173`.
+The default database is `sqlite:///./job_tracker.db` relative to `backend`. For PostgreSQL, set `DATABASE_URL` to a URL using the `postgresql+psycopg://` driver. CORS is temporarily open to all origins for connection testing; restrict it to trusted frontend origins before production use.
 
 ### Frontend
 
@@ -155,7 +155,7 @@ npm ci
 npm run dev
 ```
 
-Vite serves the frontend at `http://localhost:5173`. Set `VITE_API_BASE_URL` at build time if the API is not at `http://localhost:8000`.
+Vite serves the frontend at `http://localhost:5173`. Set `VITE_API_URL` before starting Vite or at build time to configure the API origin.
 
 ## Environment variables
 
@@ -163,8 +163,7 @@ Vite serves the frontend at `http://localhost:5173`. Set `VITE_API_BASE_URL` at 
 |---|---:|---|
 | `DATABASE_URL` | No for SQLite | SQLAlchemy database URL; defaults to local SQLite |
 | `JWT_SECRET` | Yes for login/token use | Random secret of at least 32 bytes |
-| `CORS_ORIGINS` | No | Comma-separated trusted browser origins |
-| `VITE_API_BASE_URL` | No | API origin embedded into the frontend build |
+| `VITE_API_URL` | Yes | API origin embedded into the frontend build |
 | `POSTGRES_USER` | Docker Compose | Local PostgreSQL username |
 | `POSTGRES_PASSWORD` | Docker Compose | Local PostgreSQL password; use URL-safe characters |
 | `POSTGRES_DB` | Docker Compose | Local PostgreSQL database name |
@@ -217,9 +216,9 @@ The Compose stack starts PostgreSQL with a named persistent volume, waits for th
 ## Deployment (Render example)
 
 1. Create a managed PostgreSQL instance in Render and keep its internal connection URL private.
-2. Create a backend web service from the repository using `backend` as the root directory and its Dockerfile. Set `DATABASE_URL` to the provider URL using the `postgresql+psycopg://` SQLAlchemy driver, generate a unique `JWT_SECRET` with at least 32 random bytes, and set `CORS_ORIGINS` to the deployed frontend origin. The backend image applies migrations before starting Uvicorn.
-3. Create a Render Static Site using `frontend` as the root directory; build command `npm ci && npm run build`; publish directory `dist`. Set `VITE_API_BASE_URL` to the deployed backend origin and add a rewrite from `/*` to `/index.html` for React Router routes.
-4. Deploy the frontend, then update the backend’s `CORS_ORIGINS` with the exact deployed frontend origin and redeploy.
+2. Create a backend web service from the repository using `backend` as the root directory and its Dockerfile. Set `DATABASE_URL` to the provider URL using the `postgresql+psycopg://` SQLAlchemy driver and generate a unique `JWT_SECRET` with at least 32 random bytes. The backend image applies migrations before starting Uvicorn.
+3. Create a Render Static Site using `frontend` as the root directory; build command `npm ci && npm run build`; publish directory `dist`. Set `VITE_API_URL` to the deployed backend origin and add a rewrite from `/*` to `/index.html` for React Router routes.
+4. After connection testing, restrict backend CORS to the exact deployed frontend origin and redeploy.
 5. Use HTTPS for both services, enable provider backups for PostgreSQL, and use the platform secret manager for all credentials. Never use local Compose credentials in production.
 
 The UI currently stores the short-lived bearer token in browser `sessionStorage`; this is cleared when the tab session ends or a `401` response indicates expiration. For stricter production threat models, move token handling to secure, `HttpOnly`, `SameSite` cookies and add CSRF protections before deployment.
@@ -372,7 +371,7 @@ $env:JWT_SECRET = & .\.venv\Scripts\python.exe -c "import secrets; print(secrets
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-The default database is `sqlite:///./job_tracker.db` relative to `backend`. For PostgreSQL, set `DATABASE_URL` to a URL using the `postgresql+psycopg://` driver. Configure `CORS_ORIGINS` as a comma-separated list when the frontend origin differs from the default `http://localhost:5173`.
+The default database is `sqlite:///./job_tracker.db` relative to `backend`. For PostgreSQL, set `DATABASE_URL` to a URL using the `postgresql+psycopg://` driver. CORS is temporarily open to all origins for connection testing; restrict it to trusted frontend origins before production use.
 
 ### Frontend
 
@@ -384,7 +383,7 @@ npm ci
 npm run dev
 ```
 
-Vite serves the frontend at `http://localhost:5173`. Set `VITE_API_BASE_URL` at build time if the API is not at `http://localhost:8000`.
+Vite serves the frontend at `http://localhost:5173`. Set `VITE_API_URL` before starting Vite or at build time to configure the API origin.
 
 ## Environment variables
 
@@ -392,8 +391,7 @@ Vite serves the frontend at `http://localhost:5173`. Set `VITE_API_BASE_URL` at 
 |---|---:|---|
 | `DATABASE_URL` | No for SQLite | SQLAlchemy database URL; defaults to local SQLite |
 | `JWT_SECRET` | Yes for login/token use | Random secret of at least 32 bytes |
-| `CORS_ORIGINS` | No | Comma-separated trusted browser origins |
-| `VITE_API_BASE_URL` | No | API origin embedded into the frontend build |
+| `VITE_API_URL` | Yes | API origin embedded into the frontend build |
 | `POSTGRES_USER` | Docker Compose | Local PostgreSQL username |
 | `POSTGRES_PASSWORD` | Docker Compose | Local PostgreSQL password; use URL-safe characters |
 | `POSTGRES_DB` | Docker Compose | Local PostgreSQL database name |
@@ -446,9 +444,9 @@ The Compose stack starts PostgreSQL with a named persistent volume, waits for th
 ## Deployment (Render example)
 
 1. Create a managed PostgreSQL instance in Render and keep its internal connection URL private.
-2. Create a backend web service from the repository using `backend` as the root directory and its Dockerfile. Set `DATABASE_URL` to the provider URL using the `postgresql+psycopg://` SQLAlchemy driver, generate a unique `JWT_SECRET` with at least 32 random bytes, and set `CORS_ORIGINS` to the deployed frontend origin. The backend image applies migrations before starting Uvicorn.
-3. Create a Render Static Site using `frontend` as the root directory; build command `npm ci && npm run build`; publish directory `dist`. Set `VITE_API_BASE_URL` to the deployed backend origin and add a rewrite from `/*` to `/index.html` for React Router routes.
-4. Deploy the frontend, then update the backend’s `CORS_ORIGINS` with the exact deployed frontend origin and redeploy.
+2. Create a backend web service from the repository using `backend` as the root directory and its Dockerfile. Set `DATABASE_URL` to the provider URL using the `postgresql+psycopg://` SQLAlchemy driver and generate a unique `JWT_SECRET` with at least 32 random bytes. The backend image applies migrations before starting Uvicorn.
+3. Create a Render Static Site using `frontend` as the root directory; build command `npm ci && npm run build`; publish directory `dist`. Set `VITE_API_URL` to the deployed backend origin and add a rewrite from `/*` to `/index.html` for React Router routes.
+4. After connection testing, restrict backend CORS to the exact deployed frontend origin and redeploy.
 5. Use HTTPS for both services, enable provider backups for PostgreSQL, and use the platform secret manager for all credentials. Never use local Compose credentials in production.
 
 The UI currently stores the short-lived bearer token in browser `sessionStorage`; this is cleared when the tab session ends or a `401` response indicates expiration. For stricter production threat models, move token handling to secure, `HttpOnly`, `SameSite` cookies and add CSRF protections before deployment.

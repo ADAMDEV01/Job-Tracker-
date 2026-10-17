@@ -12,20 +12,18 @@ def test_health_check_returns_ok() -> None:
     assert response.json() == {"status": "ok"}
 
 
-def test_api_cors_allows_frontend_origin_and_rejects_unknown_origin() -> None:
+def test_api_cors_allows_any_origin_with_credentials() -> None:
     allowed = client.options(
         "/auth/me",
         headers={
-            "Origin": "http://localhost:5173",
-            "Access-Control-Request-Method": "GET",
-            "Access-Control-Request-Headers": "authorization",
+            "Origin": "https://untrusted.example",
+            "Access-Control-Request-Method": "PUT",
+            "Access-Control-Request-Headers": "authorization, x-custom-header",
         },
-    )
-    denied = client.get(
-        "/health",
-        headers={"Origin": "https://untrusted.example"},
     )
 
     assert allowed.status_code == 200
-    assert allowed.headers["access-control-allow-origin"] == "http://localhost:5173"
-    assert "access-control-allow-origin" not in denied.headers
+    assert allowed.headers["access-control-allow-origin"] == "https://untrusted.example"
+    assert allowed.headers["access-control-allow-credentials"] == "true"
+    assert "PUT" in allowed.headers["access-control-allow-methods"]
+    assert "x-custom-header" in allowed.headers["access-control-allow-headers"]
